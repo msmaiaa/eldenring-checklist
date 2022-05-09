@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/msmaiaa/eldenring-checklist/db/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -24,8 +25,10 @@ func Connect() {
 		PrepareStmt: true,
 	})
 	if err != nil {
+		fmt.Println("\033[31m Error while trying to the database")
 		panic(err)
 	}
+	models.Migrate(d)
 	db = d
 }
 
