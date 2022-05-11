@@ -12,7 +12,7 @@ import (
 
 func (EntityRouter) GetEntity(c echo.Context) error {
 	entities := []models.Entity{}
-	db.GetDB().Find(&entities)
+	db.GetDB().Joins("Category").Joins("Region").Find(&entities)
 	return c.JSON(http.StatusOK, entities)
 }
 
@@ -23,6 +23,7 @@ func (EntityRouter) AddEntity(c echo.Context) error {
 		RegionID   uint   `json:"regionId" validate:"required"`
 		X          int16  `json:"x" validate:"required"`
 		Y          int16  `json:"y" validate:"required"`
+		Description string `json:"description"`
 	}
 	var body AddEntityDTO
 	if err := c.Bind(&body); err != nil {
@@ -35,6 +36,7 @@ func (EntityRouter) AddEntity(c echo.Context) error {
 		Name:       body.Name,
 		X:          body.X,
 		Y:          body.X,
+		Description: body.Description,
 		CategoryID: body.CategoryID,
 		RegionID:   body.RegionID,
 	}
