@@ -47,6 +47,6 @@ func (UserRouter) GetUserChecks(c echo.Context) error {
 	id := c.Param("id")
 	entities := []string{}
 	_db := db.GetDB()
-	_db.Raw("SELECT c.entity_id FROM checks as c INNER JOIN entities e ON c.user_id = ?", id).Scan(&entities)
+	_db.Table("checks").Where("user_id = ?", id).Pluck("entity_id", &entities)
 	return c.JSON(http.StatusOK, entities)
 }
