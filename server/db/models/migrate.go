@@ -10,5 +10,6 @@ func Migrate(db *gorm.DB) {
 		&Entity{},
 		&Region{},
 		&User{},
+		&Check{},
 	)
 }
