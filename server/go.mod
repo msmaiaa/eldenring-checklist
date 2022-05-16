@@ -13,7 +13,10 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/imroc/req/v3 v3.11.2 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -37,7 +40,7 @@ require (
 	github.com/yohcop/openid-go v1.0.0 // indirect
 	github.com/ziflex/lecho/v3 v3.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/net v0.0.0-20220111093109-d55c255bac03 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
