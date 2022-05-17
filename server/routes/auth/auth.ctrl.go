@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/imroc/req/v3"
 	"github.com/labstack/echo/v4"
 	"github.com/yohcop/openid-go"
@@ -20,7 +22,7 @@ func (n *NoOpDiscoveryCache) Get(id string) openid.DiscoveredInfo {
 
 var nonceStore = openid.NewSimpleNonceStore()
 var discoveryCache = &NoOpDiscoveryCache{}
-
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 //TODO: move steam stuff to its own package
 type SteamUser struct {
 	Steamid                  string `json:"steamid"`
@@ -70,9 +72,33 @@ func GetSteamUser (url *string) SteamUser {
 	
 	//TODO: handle possible request errors
 	client.R().
-	SetResult(&response).
-	Get(fmt.Sprintf("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%s", os.Getenv("STEAM_KEY"), steamId))
+		SetResult(&response).
+		Get(fmt.Sprintf("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%s", os.Getenv("STEAM_KEY"), steamId))
 	return response.Response.Players[0]
+}
+
+type JWTPayload struct {
+	Id string `json:"id"`
+}
+
+type JWTClaim struct {
+	JWTPayload
+	jwt.StandardClaims
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}
+
+func signJwt (payload JWTPayload) (string, error) {
+	claims := JWTClaim {
+		JWTPayload: payload,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Local().Unix() + 864000,
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
 }
 
 func (AuthRouter) SteamReturn(c echo.Context) error {
@@ -82,5 +108,11 @@ func (AuthRouter) SteamReturn(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Error verifying")
 	}
 	user := GetSteamUser(&id)
-	return c.JSON(http.StatusOK, user)
+	tokenString, tokenErr := signJwt(JWTPayload{ Id: user.Steamid})
+	if tokenErr != nil {
+		return c.JSON(http.StatusInternalServerError, tokenErr)
+	}
+	return c.JSON(http.StatusOK, LoginResponse{
+		Token: tokenString,
+	})
 }
