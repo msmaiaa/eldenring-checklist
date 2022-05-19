@@ -1,6 +1,8 @@
 package region
 
-import "github.com/labstack/echo/v4"
+import (
+	"github.com/labstack/echo/v4"
+)
 
 type RegionRouter struct{}
 
@@ -10,4 +12,3 @@ func (ctrl RegionRouter) Init(g *echo.Group) {
 	g.PUT("/:id", ctrl.UpdateRegion)
 	g.DELETE("/:id", ctrl.DeleteRegion)
 }
-

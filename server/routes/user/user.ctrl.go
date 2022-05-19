@@ -10,10 +10,10 @@ import (
 	"github.com/msmaiaa/eldenring-checklist/db/models"
 )
 
-func (UserRouter) AddUser (c echo.Context) error {
+func (UserRouter) AddUser(c echo.Context) error {
 	type AddUserDTO struct {
 		Steamid64 string `json:"steamid64" validate:"required"`
-		Role string `json:"role" validate:"required"`
+		Role      string `json:"role" validate:"required"`
 	}
 	var body AddUserDTO
 	if err := c.Bind(&body); err != nil {
@@ -25,9 +25,9 @@ func (UserRouter) AddUser (c echo.Context) error {
 	if body.Role != "admin" && body.Role != "user" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid role")
 	}
-	user := models.User {
+	user := models.User{
 		Steamid64: body.Steamid64,
-		Role: body.Role,
+		Role:      body.Role,
 	}
 	if err := db.GetDB().Create(&user).Error; err != nil {
 		var pgErr *pgconn.PgError

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,11 +11,15 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/imroc/req/v3"
+	"github.com/jackc/pgconn"
 	"github.com/labstack/echo/v4"
+	"github.com/msmaiaa/eldenring-checklist/db"
+	"github.com/msmaiaa/eldenring-checklist/db/models"
 	"github.com/yohcop/openid-go"
 )
 
 type NoOpDiscoveryCache struct{}
+
 func (n *NoOpDiscoveryCache) Put(id string, info openid.DiscoveredInfo) {}
 func (n *NoOpDiscoveryCache) Get(id string) openid.DiscoveredInfo {
 	return nil
@@ -23,6 +28,7 @@ func (n *NoOpDiscoveryCache) Get(id string) openid.DiscoveredInfo {
 var nonceStore = openid.NewSimpleNonceStore()
 var discoveryCache = &NoOpDiscoveryCache{}
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+
 //TODO: move steam stuff to its own package
 type SteamUser struct {
 	Steamid                  string `json:"steamid"`
@@ -45,7 +51,7 @@ type SteamUser struct {
 }
 type SteamApiResponse struct {
 	Response struct {
-		Players [] SteamUser `json:"players"`
+		Players []SteamUser `json:"players"`
 	} `json:"response"`
 }
 
@@ -62,14 +68,14 @@ func (AuthRouter) Login(c echo.Context) error {
 	return c.Redirect(303, url)
 }
 
-func GetSteamUser (url *string) SteamUser {
+func GetSteamUser(url *string) SteamUser {
 	response := SteamApiResponse{}
 	steamId := strings.Replace(*url, "http://steamcommunity.com/openid/id/", "", 1)
 
 	//TODO: start client elsewhere
 	client := req.C().
-    DevMode()
-	
+		DevMode()
+
 	//TODO: handle possible request errors
 	client.R().
 		SetResult(&response).
@@ -78,7 +84,8 @@ func GetSteamUser (url *string) SteamUser {
 }
 
 type JWTPayload struct {
-	Id string `json:"id"`
+	Id   string `json:"id"`
+	Role string `json:"role"`
 }
 
 type JWTClaim struct {
@@ -90,8 +97,35 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-func signJwt (payload JWTPayload) (string, error) {
-	claims := JWTClaim {
+//TODO: Refactor this entire file
+func GetUser(id string) (error, models.User) {
+	user := models.User{}
+	result := db.GetDB().First(&user, id)
+	if result.Error != nil {
+		return result.Error, user
+	}
+	return nil, user
+}
+
+func CreateUser(id string, role string) (error, models.User) {
+	user := models.User{
+		Steamid64: id,
+		Role:      role,
+	}
+	if err := db.GetDB().Create(&user).Error; err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				return echo.NewHTTPError(http.StatusConflict, "User already exists"), user
+			}
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error"), user
+	}
+	return nil, user
+}
+
+func signJwt(payload JWTPayload) (string, error) {
+	claims := JWTClaim{
 		JWTPayload: payload,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Unix() + 864000,
@@ -102,13 +136,26 @@ func signJwt (payload JWTPayload) (string, error) {
 }
 
 func (AuthRouter) SteamReturn(c echo.Context) error {
-	id, err := openid.Verify(os.Getenv("BASE_URL") + c.Request().URL.String(), discoveryCache, nonceStore)
+	id, err := openid.Verify(os.Getenv("BASE_URL")+c.Request().URL.String(), discoveryCache, nonceStore)
 	if err != nil {
 		log.Printf("Error verifying: %q\n", err)
 		return c.String(http.StatusInternalServerError, "Error verifying")
 	}
-	user := GetSteamUser(&id)
-	tokenString, tokenErr := signJwt(JWTPayload{ Id: user.Steamid})
+	steamUser := GetSteamUser(&id)
+	var role string
+	steamid := steamUser.Steamid
+	foundUserErr, foundUser := GetUser(steamid)
+	if foundUserErr != nil {
+		err, created := CreateUser(steamid, "user")
+		if err != nil {
+			return err
+		}
+		role = created.Role
+	} else {
+		role = foundUser.Role
+	}
+
+	tokenString, tokenErr := signJwt(JWTPayload{Id: steamid, Role: role})
 	if tokenErr != nil {
 		return c.JSON(http.StatusInternalServerError, tokenErr)
 	}
