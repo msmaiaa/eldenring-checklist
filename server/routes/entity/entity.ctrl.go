@@ -16,13 +16,14 @@ func (EntityRouter) GetEntity(c echo.Context) error {
 	return c.JSON(http.StatusOK, entities)
 }
 
+//TODO: return an error if an entity with the same name already exists
 func (EntityRouter) AddEntity(c echo.Context) error {
 	type AddEntityDTO struct {
-		Name       string `json:"name" validate:"required"`
-		CategoryID uint   `json:"categoryId" validate:"required"`
-		RegionID   uint   `json:"regionId" validate:"required"`
-		X          int16  `json:"x" validate:"required"`
-		Y          int16  `json:"y" validate:"required"`
+		Name        string `json:"name" validate:"required"`
+		CategoryID  uint   `json:"categoryId" validate:"required"`
+		RegionID    uint   `json:"regionId" validate:"required"`
+		X           int16  `json:"x" validate:"required"`
+		Y           int16  `json:"y" validate:"required"`
 		Description string `json:"description"`
 	}
 	var body AddEntityDTO
@@ -33,12 +34,12 @@ func (EntityRouter) AddEntity(c echo.Context) error {
 		return err
 	}
 	entity := models.Entity{
-		Name:       body.Name,
-		X:          body.X,
-		Y:          body.X,
+		Name:        body.Name,
+		X:           body.X,
+		Y:           body.X,
 		Description: body.Description,
-		CategoryID: body.CategoryID,
-		RegionID:   body.RegionID,
+		CategoryID:  body.CategoryID,
+		RegionID:    body.RegionID,
 	}
 	db.GetDB().Create(&entity)
 	return c.JSON(http.StatusOK, entity)

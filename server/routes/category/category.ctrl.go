@@ -16,6 +16,7 @@ func (CategoryRouter) GetCategories(c echo.Context) error {
 	return c.JSON(http.StatusOK, categories)
 }
 
+//TODO: return an error if a category with the same name already exists
 func (CategoryRouter) AddCategory(c echo.Context) error {
 	type AddCategoryDTO struct {
 		Name string `json:"name" validate:"required"`

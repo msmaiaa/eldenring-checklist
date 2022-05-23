@@ -16,6 +16,7 @@ func (RegionRouter) GetRegions(c echo.Context) error {
 	return c.JSON(http.StatusOK, regions)
 }
 
+//TODO: return an error if a region with the same name already exists
 func (RegionRouter) AddRegion(c echo.Context) error {
 	type AddRegionDTO struct {
 		Name string `json:"name" validate:"required"`
