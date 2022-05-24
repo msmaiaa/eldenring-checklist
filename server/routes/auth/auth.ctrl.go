@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/jackc/pgconn"
 	"github.com/labstack/echo/v4"
 	"github.com/msmaiaa/eldenring-checklist/db"
 	"github.com/msmaiaa/eldenring-checklist/db/models"
@@ -58,8 +57,7 @@ func CreateUser(id string, role string) (models.User, error) {
 		Role:      role,
 	}
 	if err := db.GetDB().Create(&user).Error; err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, isPgError := db.GetPostgresError(&err); isPgError {
 			if pgErr.Code == "23505" {
 				return user, echo.NewHTTPError(http.StatusConflict, "User already exists")
 			}

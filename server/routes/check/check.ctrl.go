@@ -26,8 +26,8 @@ func (CheckRouter) AddCheck(c echo.Context) error {
 	if err := c.Validate(&body); err != nil {
 		return err
 	}
-	if err := db.GetDB().Debug().Where("entity_id = ? AND user_id = ?", body.EntityId, userId).First(&models.Check{}).Error; err == nil {
-		return c.NoContent(http.StatusBadRequest)
+	if err := db.GetDB().Where("entity_id = ? AND user_id = ?", body.EntityId, userId).First(&models.Check{}).Error; err == nil {
+		return c.NoContent(http.StatusConflict)
 	}
 	check := models.Check{
 		UserId:   userId,

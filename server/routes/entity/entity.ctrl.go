@@ -16,7 +16,6 @@ func (EntityRouter) GetEntity(c echo.Context) error {
 	return c.JSON(http.StatusOK, entities)
 }
 
-//TODO: return an error if an entity with the same name already exists
 func (EntityRouter) AddEntity(c echo.Context) error {
 	type AddEntityDTO struct {
 		Name        string `json:"name" validate:"required"`
@@ -41,7 +40,15 @@ func (EntityRouter) AddEntity(c echo.Context) error {
 		CategoryID:  body.CategoryID,
 		RegionID:    body.RegionID,
 	}
-	db.GetDB().Create(&entity)
+	if err := db.GetDB().Create(&entity).Error; err != nil {
+		if pgErr, isPgError := db.GetPostgresError(&err); isPgError {
+			if pgErr.Code == "23505" {
+				return c.JSON(http.StatusConflict, echo.Map{
+					"error": "An entity with the provided name already exists",
+				})
+			}
+		}
+	}
 	return c.JSON(http.StatusOK, entity)
 }
 

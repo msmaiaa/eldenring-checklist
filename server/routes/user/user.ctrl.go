@@ -1,10 +1,8 @@
 package user
 
 import (
-	"errors"
 	"net/http"
 
-	"github.com/jackc/pgconn"
 	"github.com/labstack/echo/v4"
 	"github.com/msmaiaa/eldenring-checklist/db"
 	"github.com/msmaiaa/eldenring-checklist/db/models"
@@ -30,12 +28,11 @@ func (UserRouter) AddUser(c echo.Context) error {
 		Role:      body.Role,
 	}
 	if err := db.GetDB().Create(&user).Error; err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			//TODO: create helper to check for specific postgres errors https://github.com/go-gorm/gorm/issues/4037#issuecomment-907863949
+		if pgErr, isPgError := db.GetPostgresError(&err); isPgError {
 			if pgErr.Code == "23505" {
-				c.Logger().Error(pgErr.Message)
-				return echo.NewHTTPError(http.StatusConflict, "User already exists")
+				return c.JSON(http.StatusConflict, echo.Map{
+					"error": "User already exists",
+				})
 			}
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")

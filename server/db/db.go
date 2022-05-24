@@ -1,9 +1,11 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/jackc/pgconn"
 	"github.com/msmaiaa/eldenring-checklist/db/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,6 +23,14 @@ func getDbUrl() string {
 		os.Getenv("DB_NAME"),
 		os.Getenv("DB_PASSWORD"),
 		"disable")
+}
+
+func GetPostgresError(err *error) (pgconn.PgError, bool) {
+	var pgErr *pgconn.PgError
+	if errors.As(*err, &pgErr) {
+		return *pgErr, true
+	}
+	return pgconn.PgError{}, false
 }
 
 func Connect() {

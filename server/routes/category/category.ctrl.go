@@ -16,7 +16,6 @@ func (CategoryRouter) GetCategories(c echo.Context) error {
 	return c.JSON(http.StatusOK, categories)
 }
 
-//TODO: return an error if a category with the same name already exists
 func (CategoryRouter) AddCategory(c echo.Context) error {
 	type AddCategoryDTO struct {
 		Name string `json:"name" validate:"required"`
@@ -31,7 +30,16 @@ func (CategoryRouter) AddCategory(c echo.Context) error {
 	category := models.Category{
 		Name: body.Name,
 	}
-	db.GetDB().Create(&category)
+	if err := db.GetDB().Create(&category).Error; err != nil {
+		if pgErr, isPgError := db.GetPostgresError(&err); isPgError {
+			c.Logger().Debug(pgErr.Code)
+			if pgErr.Code == "23505" {
+				return c.JSON(http.StatusConflict, echo.Map{
+					"error": "A category with the provided name already exists",
+				})
+			}
+		}
+	}
 	return c.JSON(http.StatusOK, category)
 }
 

@@ -16,7 +16,6 @@ func (RegionRouter) GetRegions(c echo.Context) error {
 	return c.JSON(http.StatusOK, regions)
 }
 
-//TODO: return an error if a region with the same name already exists
 func (RegionRouter) AddRegion(c echo.Context) error {
 	type AddRegionDTO struct {
 		Name string `json:"name" validate:"required"`
@@ -31,7 +30,15 @@ func (RegionRouter) AddRegion(c echo.Context) error {
 	region := models.Region{
 		Name: body.Name,
 	}
-	db.GetDB().Create(&region)
+	if err := db.GetDB().Create(&region).Error; err != nil {
+		if pgErr, isPgError := db.GetPostgresError(&err); isPgError {
+			if pgErr.Code == "23505" {
+				return c.JSON(http.StatusConflict, echo.Map{
+					"error": "A region with the provided name already exists",
+				})
+			}
+		}
+	}
 	return c.JSON(http.StatusOK, region)
 }
 
