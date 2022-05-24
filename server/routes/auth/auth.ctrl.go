@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -36,7 +37,9 @@ type JWTClaim struct {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
+	Token       string `json:"token"`
+	Personaname string `json:"personaname"`
+	AvatarUrl   string `json:"avatarUrl"`
 }
 
 //TODO: move these functions to a repository?
@@ -67,10 +70,14 @@ func CreateUser(id string, role string) (models.User, error) {
 }
 
 func signJwt(payload JWTPayload) (string, error) {
+	expires, err := strconv.Atoi(os.Getenv("JWT_EXPIRES"))
+	if err != nil {
+		return "", errors.New("invalid JWT expiration time")
+	}
 	claims := JWTClaim{
 		JWTPayload: payload,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Unix() + 864000,
+			ExpiresAt: time.Now().Local().Unix() + int64(expires),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -86,8 +93,8 @@ func (AuthRouter) SteamReturn(c echo.Context) error {
 	steamUser := steam.QuerySteamUser(&id)
 	var role string
 	steamid := steamUser.Steamid
-	foundUser, foundUserErr := GetUser(steamid)
-	if foundUserErr != nil {
+	foundUser, err := GetUser(steamid)
+	if err != nil {
 		created, err := CreateUser(steamid, "user")
 		if err != nil {
 			return err
@@ -97,11 +104,13 @@ func (AuthRouter) SteamReturn(c echo.Context) error {
 		role = foundUser.Role
 	}
 
-	tokenString, tokenErr := signJwt(JWTPayload{Id: steamid, Role: role})
-	if tokenErr != nil {
-		return c.JSON(http.StatusInternalServerError, tokenErr)
+	tokenString, err := signJwt(JWTPayload{Id: steamid, Role: role})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 	return c.JSON(http.StatusOK, LoginResponse{
-		Token: tokenString,
+		Token:       tokenString,
+		Personaname: steamUser.Personaname,
+		AvatarUrl:   steamUser.Avatar,
 	})
 }

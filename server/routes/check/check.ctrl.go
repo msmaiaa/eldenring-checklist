@@ -10,9 +10,12 @@ import (
 	"github.com/msmaiaa/eldenring-checklist/routes/auth"
 )
 
+func getUserFromContext(c echo.Context) auth.JWTPayload {
+	return c.Get("user").(*jwt.Token).Claims.(*auth.JWTClaim).JWTPayload
+}
+
 func (CheckRouter) AddCheck(c echo.Context) error {
-	userId := c.Get("user").(*jwt.Token).
-		Claims.(*auth.JWTClaim).JWTPayload.Id
+	userId := getUserFromContext(c).Id
 	type AddCheckDTO struct {
 		EntityId uint `json:"entityId" validate:"required"`
 	}
@@ -35,8 +38,7 @@ func (CheckRouter) AddCheck(c echo.Context) error {
 }
 
 func (CheckRouter) DeleteCheck(c echo.Context) error {
-	userId := c.Get("user").(*jwt.Token).
-		Claims.(*auth.JWTClaim).JWTPayload.Id
+	userId := getUserFromContext(c).Id
 	type DeleteCheckDTO struct {
 		EntityId uint `json:"entityId" validate:"required"`
 	}

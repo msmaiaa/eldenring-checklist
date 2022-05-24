@@ -13,14 +13,18 @@ var (
 	db *gorm.DB
 )
 
-func Connect() {
-	db_url := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
+func getDbUrl() string {
+	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_NAME"),
 		os.Getenv("DB_PASSWORD"),
 		"disable")
+}
+
+func Connect() {
+	db_url := getDbUrl()
 	d, err := gorm.Open(postgres.Open(db_url), &gorm.Config{
 		PrepareStmt: true,
 	})

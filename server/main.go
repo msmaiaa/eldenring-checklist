@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/go-playground/validator"
@@ -21,12 +22,12 @@ func setupLogger(e *echo.Echo) {
 		output,
 		lecho.WithLevel(log.DEBUG),
 		lecho.WithTimestamp(),
- 	)
+	)
 	e.Logger = logger
 	e.Use(middleware.RequestID())
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger,
-	}))	
+	}))
 }
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 
 	e.Validator = &lib.CustomValidator{Validator: validator.New()}
 
-	routes.Routes(e.Group(""))
+	routes.Routes(e.Group("/api/v1"))
 
-	e.Logger.Fatal(e.Start("127.0.0.1:1337"))
+	e.Logger.Fatal(e.Start(fmt.Sprintf("127.0.0.1:%s", os.Getenv("PORT"))))
 }

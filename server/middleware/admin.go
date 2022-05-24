@@ -1,4 +1,4 @@
-package config
+package middleware
 
 import (
 	"github.com/golang-jwt/jwt"

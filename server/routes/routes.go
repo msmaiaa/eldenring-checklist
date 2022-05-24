@@ -13,13 +13,13 @@ import (
 )
 
 func Routes(g *echo.Group) {
-	auth.AuthRouter{}.Init(g.Group(("/api/v1/auth")))
+	auth.AuthRouter{}.Init(g.Group(("/auth")))
 	g.Use(middleware.JWTWithConfig(config.JWT))
-	region.RegionRouter{}.Init(g.Group("/api/v1/region"))
-	entity.EntityRouter{}.Init(g.Group("/api/v1/entity"))
-	category.CategoryRouter{}.Init(g.Group("/api/v1/category"))
-	check.CheckRouter{}.Init(g.Group(("/api/v1/check")))
-	user.UserRouter{}.Init(g.Group(("/api/v1/user")))
+	region.RegionRouter{}.Init(g.Group("/region"))
+	entity.EntityRouter{}.Init(g.Group("/entity"))
+	category.CategoryRouter{}.Init(g.Group("/category"))
+	check.CheckRouter{}.Init(g.Group(("/check")))
+	user.UserRouter{}.Init(g.Group(("/user")))
 }
 
 ////////////////////////
