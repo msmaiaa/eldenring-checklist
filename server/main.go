@@ -31,10 +31,7 @@ func setupLogger(e *echo.Echo) {
 }
 
 func main() {
-	dotenv_err := godotenv.Load()
-	if dotenv_err != nil {
-		panic(dotenv_err)
-	}
+	godotenv.Load()
 
 	db.Connect()
 
