@@ -1,0 +1,1 @@
+go build -o /app/server /app/main.go

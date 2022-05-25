@@ -13,7 +13,7 @@ type CustomValidator struct {
 
 // Validate : Validate Data
 func (cv *CustomValidator) Validate(i interface{}) error {
-	if err:= cv.Validator.Struct(i); err != nil {
+	if err := cv.Validator.Struct(i); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	return nil

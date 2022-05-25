@@ -1,0 +1,19 @@
+version: 0.0
+os: linux
+files:
+  - source: ./server/
+    destination:  /app/
+
+hooks:
+  BeforeInstall:
+    - location: ./server/scripts/cleanup.sh
+      timeout: 180
+      runas: root
+  AfterInstall:
+    - location: ./server/scripts/build.sh
+      timeout: 180
+      runas: root
+  ApplicationStart:
+    - location: ./server/scripts/start.sh
+      timeout: 180
+      runas: root
